@@ -51,6 +51,9 @@ python src/analyze_latency.py
 ``
 Creates endpoint-level percentiles, hourly p50/p95 summaries and `reports/latency_over_time.png`.
 
+## Interview preparation
+See [INTERVIEW_NOTES.md](INTERVIEW_NOTES.md) for definitions of the telemetry features, Isolation Forest rationale, percentile interpretation and limitations to explain accurately.
+
 ## Data and limitations
 The bundled episode data is **synthetic** and intended to demonstrate the analysis workflow. It is not real robot telemetry and does not establish performance or safety of any robot. The latency collector must be run to create measurements; the repository does not claim measured latency results.
 
