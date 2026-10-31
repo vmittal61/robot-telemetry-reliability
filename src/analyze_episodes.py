@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
@@ -41,14 +42,43 @@ def main() -> None:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     df.to_csv(REPORT_DIR / "episode_flags.csv", index=False)
     summary = (
-        f"Total episodes: {len(df)}\n"
-        f"Rule-based flags: {int(df['rule_flag'].sum())}\n"
-        f"Isolation Forest flags: {int(df['iforest_flag'].sum())}\n"
-        f"Combined review queue: {int(df['review_flag'].sum())}\n"
-        "Synthetic demo labels are not used to train the detector.\n"
+        f"Total episodes: {len(df)}\\n"
+        f"Rule-based flags: {int(df['rule_flag'].sum())}\\n"
+        f"Isolation Forest flags: {int(df['iforest_flag'].sum())}\\n"
+        f"Combined review queue: {int(df['review_flag'].sum())}\\n"
+        "Synthetic demo labels are not used to train the detector.\\n"
     )
     (REPORT_DIR / "episode_summary.txt").write_text(summary, encoding="utf-8")
+
+    # Visual 1: count of rule-triggered patterns.
+    counts = df[rule_columns].sum().rename({
+        "flag_idle": "High idle", "flag_jerk": "High jerk",
+        "flag_tracking": "Tracking error", "flag_network": "Packet loss",
+    })
+    ax = counts.sort_values().plot(kind="barh", figsize=(8, 4), title="Episodes by rule-based flag")
+    ax.set_xlabel("Number of episodes")
+    ax.set_ylabel("")
+    plt.tight_layout()
+    plt.savefig(REPORT_DIR / "rule_flag_counts.png", dpi=160)
+    plt.close()
+
+    # Visual 2: two telemetry dimensions; colour separates the review queue.
+    fig, ax = plt.subplots(figsize=(7, 5))
+    flagged = df["review_flag"]
+    ax.scatter(df.loc[~flagged, "idle_ratio"], df.loc[~flagged, "jerk_rms"],
+               alpha=0.65, label="Not flagged")
+    ax.scatter(df.loc[flagged, "idle_ratio"], df.loc[flagged, "jerk_rms"],
+               alpha=0.8, label="Review candidate")
+    ax.set_xlabel("Idle ratio")
+    ax.set_ylabel("Jerk RMS")
+    ax.set_title("Idle time vs jerk by review status")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(REPORT_DIR / "idle_vs_jerk.png", dpi=160)
+    plt.close(fig)
+
     print(summary)
+    print(f"Charts and outputs saved to {REPORT_DIR}")
 
 
 if __name__ == "__main__":
